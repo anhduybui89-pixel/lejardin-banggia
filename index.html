@@ -75,8 +75,6 @@ canvas#cv{width:100%;height:auto;display:block;border-radius:2px;box-shadow:0 1p
 .export .line{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
 .export .line label{flex:1;min-width:180px}
 .status{font-size:13px;color:var(--muted);min-height:1.2em}
-.fallback{display:grid;gap:8px}
-.fallback img{width:100%;border:1px solid var(--line)}
 .inline{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
 .inline label{flex:1;min-width:160px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -117,6 +115,20 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
 .flash{animation:flash 1.6s ease-out}
 @keyframes flash{0%{box-shadow:0 0 0 3px #C9622E}100%{box-shadow:0 0 0 0 transparent}}
 @media (max-width:860px){.guide-intro,.step{grid-template-columns:minmax(0,1fr)}.guide-intro h1{font-size:32px}}
+.pickers{display:flex;gap:10px;flex-wrap:wrap;flex:0 1 620px}
+.pickers label{flex:1 1 220px;min-width:0}
+.branch-edit{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.branch-edit summary{cursor:pointer;font-weight:600;color:var(--olive-strong);font-size:14px;padding:4px 0}
+.branch-edit[open] summary{margin-bottom:10px}
+.warn{margin:8px 0;padding:8px 10px;border-radius:6px;border:1px solid var(--warn);color:var(--warn);font-size:13px}
+.result{display:grid;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.res-head{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+.res-head b{font-size:13px;overflow-wrap:anywhere;min-width:0}
+.result img{width:100%;border:1px solid var(--line);border-radius:4px;-webkit-touch-callout:default}
+.res-file{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.res-ico{display:inline-grid;place-items:center;width:40px;height:48px;border-radius:4px;background:var(--olive-strong);color:var(--on-olive);font-weight:700;font-size:12px}
+a.btnlink{display:inline-flex;align-items:center;font-size:13px;border-radius:6px;border:1px solid var(--line);background:var(--field);color:var(--ink);padding:7px 12px;text-decoration:none}
+a.btnlink.primary{background:var(--olive-strong);color:var(--on-olive);border-color:var(--olive-strong);font-weight:600;padding:10px 18px;font-size:14px}
 </style>
 
 </head><body>
@@ -127,9 +139,10 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
     <a href="#huong-dan" id="tab-guide" class="tab">Hướng dẫn</a>
   </nav>
   <div class="grow"></div>
-  <label id="presetWrap" style="min-width:260px;flex:0 1 380px">Chọn mẫu bảng giá
-    <select id="preset"></select>
-  </label>
+  <div id="presetWrap" class="pickers">
+    <label>Chi nhánh<select id="branch"></select></label>
+    <label>Loại bảng giá<select id="preset"></select></label>
+  </div>
 </div>
 
 <div class="wrap" id="view-editor">
@@ -144,6 +157,27 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
       <div class="row-actions">
         <button id="resetBtn" class="ghost">Khôi phục mẫu gốc</button>
       </div>
+      <details id="branchEdit" class="branch-edit">
+        <summary>Thông tin chi nhánh: <span id="beTitle"></span></summary>
+        <p class="warn" id="beWarn" hidden>Chi nhánh này chưa có đủ giá gốc. Điền giá bên dưới rồi bấm "Điền vào bảng giá".</p>
+        <div class="grid g3">
+          <label>Tên khách sạn<input id="beBrand"></label>
+          <label>Dòng phụ<input id="beSub"></label>
+          <label>Thuế VAT<select id="beVat"><option value="in">Giá đã gồm VAT</option><option value="ex">Giá chưa gồm VAT</option></select></label>
+        </div>
+        <div class="tablewrap" style="margin-top:10px"><table class="prices" id="beTable"></table></div>
+        <div class="row-actions">
+          <button id="beAdd">+ Thêm hạng phòng</button>
+          <button id="beApply" class="primary">Điền vào bảng giá</button>
+          <button id="beReset" class="ghost" hidden>Về giá gốc ban đầu</button>
+          <button id="beDel" class="ghost" hidden>Xóa chi nhánh này</button>
+        </div>
+        <p class="hint">Giá gốc đầy đủ (VD 1150000). Mọi loại bảng giá của chi nhánh (khuyến mãi, qua đêm, đối tác) tự tính từ các giá này. Thông tin sửa ở đây lưu trên máy đang dùng.</p>
+        <div class="inline" style="margin-top:10px">
+          <label>Thêm chi nhánh mới<input id="beNewName" placeholder="VD: Le Jardin Lite · Thủ Đức"></label>
+          <button id="beNewBtn">Thêm</button>
+        </div>
+      </details>
       <div class="inline" style="margin-top:12px">
         <label>Lưu bản đang sửa thành mẫu riêng<input id="saveName" placeholder="VD: Bàn Cờ – Ưu đãi tháng 12"></label>
         <button id="saveBtn">Lưu mẫu</button>
@@ -174,6 +208,7 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
         <label>Dải đen – dòng tiếng Việt<input id="bannerVi"></label>
         <label>Dải đen – dòng tiếng Anh<input id="bannerEn"></label>
         <label>Dòng dưới dải đen (tùy chọn)<input id="subline" placeholder="VD: Thời hạn áp dụng: 01/12/2026 - 31/12/2026"></label>
+        <label>Điền nhanh tháng áp dụng<select id="month"></select></label>
         <label>Căn tên hạng phòng<select id="roomAlign"><option value="left">Trái</option><option value="center">Giữa</option></select></label>
       </div>
     </section>
@@ -208,9 +243,17 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
         <button id="pdfBtn">Xuất PDF để in</button>
       </div>
       <div class="status" id="status" role="status"></div>
-      <div class="fallback" id="fallback" hidden>
-        <span class="hint" style="margin:0">Nhấn giữ (điện thoại) hoặc chuột phải (máy tính) vào ảnh bên dưới, chọn "Lưu ảnh".</span>
-        <img id="fallbackImg" alt="Ảnh bảng giá đã xuất">
+      <p class="warn" id="inappWarn" hidden>Bạn đang mở trong ứng dụng nhắn tin (Zalo, Messenger…), nơi thường chặn tải file. Bấm nút ⋯ ở góc trên, chọn "Mở bằng trình duyệt" (Safari hoặc Chrome) để lưu ảnh và PDF.</p>
+      <div class="result" id="result" hidden>
+        <div class="res-head"><b id="resName"></b><button class="x" id="resClose">Đóng</button></div>
+        <img id="resImg" alt="Ảnh bảng giá vừa xuất">
+        <div class="res-file" id="resFileCard" hidden><span class="res-ico">PDF</span><span id="resFileInfo"></span></div>
+        <div class="row-actions" style="margin-top:0">
+          <a class="btnlink primary" id="resDl" href="#">Tải về máy</a>
+          <button id="resShare" hidden>Lưu vào Ảnh / Chia sẻ</button>
+          <a class="btnlink" id="resOpen" href="#" target="_blank" rel="noopener">Mở trong tab mới</a>
+        </div>
+        <p class="hint" id="resHint" style="margin:0"></p>
       </div>
     </section>
   </aside>
@@ -237,7 +280,7 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
   <section class="card step">
     <div>
       <h2><span class="num">1</span>Chọn mẫu bảng giá</h2>
-      <p>Ở góc trên bên phải, mở ô <b>Chọn mẫu bảng giá</b> và chọn mẫu gần nhất với bảng anh/chị cần làm. Các mẫu được xếp theo chi nhánh.</p>
+      <p>Ở góc trên bên phải, chọn <b>Chi nhánh</b> trước. Tên khách sạn, hạng phòng, giá gốc, giờ phát sinh và dòng VAT tự điền theo chi nhánh. Sau đó chọn <b>Loại bảng giá</b>.</p>
       <ul>
         <li><b>Giá niêm yết 2026</b>: bảng giá gốc, không giảm.</li>
         <li><b>Khuyến mãi / Ưu đãi CN – T5</b> và <b>T6 – T7</b>: có giá gốc gạch ngang và giá sau giảm.</li>
@@ -246,7 +289,8 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
       <p style="margin-top:8px">Bản đang sửa tự lưu trên máy. Đóng trình duyệt rồi mở lại vẫn còn.</p>
     </div>
     <div class="uimock" aria-hidden="true">
-      <div class="f"><span>Chọn mẫu bảng giá</span><div class="box">Le Jardin Secret Sài Gòn › Khuyến mãi CN – T5 (giảm 20%) ▾</div></div>
+      <div class="f"><span>Chọn mẫu bảng giá</span><div class="box">Le Jardin Secret · Quận 4 ▾</div></div>
+      <div class="f"><span>Loại bảng giá</span><div class="box">Khuyến mãi CN – T5 (giảm 20%) ▾</div></div>
     </div>
   </section>
 
@@ -256,7 +300,7 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
       <p>Trong mục <b>Tiêu đề</b>, ô "Tiêu đề" viết mỗi dòng một hàng. Thường chỉ cần đổi tên tháng và khoảng ngày.</p>
       <ol>
         <li>Dòng 1: tên chương trình, ví dụ <i>DECEMBER PROMOTION</i>.</li>
-        <li>Dòng 2: ngày áp dụng, ví dụ <i>01/12/2026 - 31/12/2026</i>.</li>
+        <li>Dòng 2: ngày áp dụng, ví dụ <i>01/12/2026 - 31/12/2026</i>. Nhanh hơn: chọn tháng ở ô <b>Điền nhanh tháng áp dụng</b>, tên tháng và ngày tự đổi.</li>
         <li>Đổi chữ trong <b>Dải đen</b> nếu bảng dành cho T6 – T7 hoặc mục đích khác.</li>
       </ol>
       <button class="go" data-go="sec-title">Mở mục Tiêu đề</button>
@@ -331,7 +375,7 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
         <li>Bấm <b>Xuất ảnh PNG</b> để gửi khách hoặc đăng mạng xã hội, hoặc <b>Xuất PDF để in</b> để in khổ A4. Sau đó xác nhận lưu file.</li>
         <li>Khi in PDF, chọn khổ giấy A4, hướng dọc, tỉ lệ <b>Vừa trang</b> (Fit to page).</li>
       </ol>
-      <p style="margin-top:8px">Nếu máy không hiện hộp lưu file, ảnh sẽ hiện ngay bên dưới nút. Nhấn giữ (điện thoại) hoặc chuột phải (máy tính) vào ảnh và chọn <b>Lưu ảnh</b>.</p>
+      <p style="margin-top:8px">Sau khi bấm xuất, file hiện ngay dưới nút kèm nút <b>Tải về máy</b>. Trên iPad/iPhone bấm <b>Lưu vào Ảnh / Chia sẻ</b> rồi chọn "Lưu hình ảnh". Nếu đang mở link trong Zalo, bấm ⋯ chọn <b>Mở bằng trình duyệt</b> trước.</p>
       <button class="go" data-go="sec-export">Mở phần Xuất ảnh</button>
     </div>
     <div class="uimock" aria-hidden="true">
@@ -359,6 +403,10 @@ kbd{font-family:var(--ui);font-size:12px;border:1px solid var(--line);border-bot
     <dl class="faq">
       <dt>Mở công cụ ở máy khác (hoặc mở file thay vì link) thì mất mẫu đã lưu?</dt>
       <dd>Mẫu riêng lưu theo từng máy và từng nơi mở. Ở nơi cũ bấm "Sao lưu ra file" hoặc "Sao chép mã sao lưu" trong mục Chi nhánh, sang nơi mới bấm "Khôi phục từ file" hoặc "Dán mã sao lưu".</dd>
+      <dt>Chi nhánh của tôi chưa có giá hoặc giá đã đổi?</dt>
+      <dd>Mở mục Chi nhánh, bấm "Thông tin chi nhánh", sửa hạng phòng và giá gốc rồi bấm "Điền vào bảng giá". Các loại bảng khuyến mãi tự tính theo giá mới.</dd>
+      <dt>Bấm xuất mà không thấy file?</dt>
+      <dd>Nếu mở link trong Zalo hoặc Messenger, bấm ⋯ chọn "Mở bằng trình duyệt". Trên iPad/iPhone dùng nút "Lưu vào Ảnh / Chia sẻ". Trên máy tính, file nằm trong thư mục Tải xuống (Downloads).</dd>
       <dt>Lỡ sửa sai, muốn quay về như ban đầu?</dt>
       <dd>Bấm "Khôi phục mẫu gốc" trong mục Chi nhánh. Mọi thay đổi trên mẫu đang chọn sẽ mất.</dd>
       <dt>Tên hạng phòng hoặc tiêu đề quá dài?</dt>
@@ -859,13 +907,6 @@ const draft=LS.get("ljps.draft");
 S = draft && draft.rows ? draft : stateFromPreset(PRESETS[0]);
 
 /* ---------- editor ---------- */
-function fillPresetSelect(){
-  const groups={};
-  PRESETS.forEach(p=>(groups[p.group]=groups[p.group]||[]).push(`<option value="${p.id}">${esc(p.name)}</option>`));
-  let h=Object.entries(groups).map(([g,o])=>`<optgroup label="${esc(g)}">${o.join("")}</optgroup>`).join("");
-  if(custom.length) h+=`<optgroup label="Mẫu đã lưu trên máy này">${custom.map(c=>`<option value="${esc(c.presetId)}">${esc(c.savedName)}</option>`).join("")}</optgroup>`;
-  $("preset").innerHTML=h; $("preset").value=S.presetId; $("delBtn").hidden=!String(S.presetId).startsWith("custom-");
-}
 function bindSimple(){
   ["brandName","brandSub","currency","title","titleStyle","bannerVi","bannerEn","subline","roomAlign","filename"].forEach(k=>{
     const el=$(k); el.value=S[k]??"";
@@ -935,22 +976,179 @@ function renderNotes(){
   S.notes.forEach((n,i)=>{$(`n${i}-vi`).oninput=e=>{n.vi=e.target.value;changed()};$(`n${i}-en`).oninput=e=>{n.en=e.target.value;changed()}});
   document.querySelectorAll("[data-delnote]").forEach(b=>b.onclick=()=>{S.notes.splice(+b.dataset.delnote,1);renderNotes();changed()});
 }
+
+/* ---------- branches & sheet types ---------- */
+const K=v=>v===""||v==null?"":v*1000;
+const BRANCHES_BASE=[
+  {id:"q4",name:"Le Jardin Secret · Quận 4",brandName:"le JARDIN SECRET",brandSub:"SAI GON",vat:"in",roomAlign:"left",currency:"VND",
+   rooms:SECRET_ROOMS.map((n,i)=>({name:n,day:K(S_DAY[i]),night:K(S_NIGHT[i]),extra:K(S_EXTRA[i]),combo:K([399,529,629,769,899,1199][i])})),hourly:null},
+  {id:"q3",name:"Le Jardin Lite · Bàn Cờ (Q3)",brandName:"le JARDIN LITE",brandSub:"BAN CO",vat:"ex",roomAlign:"center",currency:"VND",
+   rooms:LITE_ROOMS.map((n,i)=>({name:n,day:K(L_DAY[i]),night:K(L_NIGHT[i]),extra:K(L_EXTRA[i]),combo:""})),
+   hourly:HOUR_ROOMS.map((n,i)=>({name:n,lite:K([279,319,349,449,649][i]),comfort:K([349,389,429,529,749][i]),relax:K([499,549,599,729,999][i]),extra:K([100,110,120,140,180][i])}))},
+  {id:"bh",name:"Le Jardin Lite · Biên Hòa",brandName:"le JARDIN LITE",brandSub:"BIEN HOA",vat:"ex",roomAlign:"center",currency:"VND",incomplete:true,
+   rooms:["MINI","STANDARD","DELUXE","PREMIUM DELUXE","VIP"].map(n=>({name:n,day:"",night:"",extra:"",combo:""})),hourly:null},
+  {id:"td",name:"L Jardin · Thảo Điền",brandName:"le JARDIN",brandSub:"THAO DIEN",vat:"in",roomAlign:"left",currency:"VND",incomplete:true,
+   rooms:[{name:"STANDARD",day:"",night:"",extra:"",combo:""}],hourly:null},
+];
+const TYPES=[
+  {id:"base",name:"Giá niêm yết"},
+  {id:"wk",name:"Khuyến mãi CN – T5 (giảm 20%)"},
+  {id:"we",name:"Khuyến mãi T6 – T7 (giảm 10%)"},
+  {id:"on-wk",name:"Qua đêm + Combo 3 tiếng CN – T5",needs:"combo"},
+  {id:"on-we",name:"Qua đêm + Combo 3 tiếng T6 – T7",needs:"combo"},
+  {id:"partner",name:"Đối tác lữ hành (giảm 20%)"},
+  {id:"hour",name:"Giá thuê theo giờ",needs:"hourly"},
+];
+const PRESET_MAP={"q4:base":"s-base","q4:wk":"s-wk","q4:we":"s-we","q4:on-wk":"s-on-wk","q4:on-we":"s-on-we",
+  "q3:base":"l-base","q3:wk":"l-wk","q3:we":"l-we","q3:partner":"l-partner","q3:hour":"l-hour"};
+let branchEdits=LS.get("ljps.branches")||{};
+const clone=o=>JSON.parse(JSON.stringify(o));
+function allBranches(){
+  const list=BRANCHES_BASE.map(b=>branchEdits[b.id]?{...b,...branchEdits[b.id],id:b.id,edited:true}:b);
+  Object.values(branchEdits).filter(e=>e.isNew).forEach(e=>list.push({...e,edited:true}));
+  return list;
+}
+const getBranch=id=>allBranches().find(b=>b.id===id)||allBranches()[0];
+function hasCombo(b){return b.rooms.some(r=>r.combo!==""&&r.combo!=null)}
+function typesFor(b){return TYPES.filter(t=>!t.needs||(t.needs==="combo"?hasCombo(b):!!(b.hourly&&b.hourly.length)))}
+
+/* month helpers */
+const MONTHS_EN=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+function curMonth(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function monthRange(ym){const [y,m]=ym.split("-").map(Number);const last=new Date(y,m,0).getDate();const mm=String(m).padStart(2,"0");return `01/${mm}/${y} - ${last}/${mm}/${y}`}
+function applyMonth(st,ym){
+  const [y,m]=ym.split("-").map(Number);const range=monthRange(ym);let t=st.title;let hit=false;
+  const re=new RegExp("\\b("+MONTHS_EN.join("|")+")\\b");
+  if(re.test(t)){t=t.replace(re,MONTHS_EN[m-1]);hit=true}
+  if(/\d{2}\/\d{2}\/\d{4}\s*-\s*\d{2}\/\d{2}\/\d{4}/.test(t)){t=t.replace(/\d{2}\/\d{2}\/\d{4}\s*-\s*\d{2}\/\d{2}\/\d{4}/,range);hit=true}
+  st.title=t;
+  if(/\d{2}\/\d{2}\/\d{4}\s*-\s*\d{2}\/\d{2}\/\d{4}/.test(st.subline||"")){st.subline=st.subline.replace(/\d{2}\/\d{2}\/\d{4}\s*-\s*\d{2}\/\d{2}\/\d{4}/,range);hit=true}
+  else if(!hit){st.subline="Thời hạn áp dụng: "+range}
+  st.month=ym;return st;
+}
+
+function genState(b,typeId){
+  const vat=b.vat==="in"?N_VAT_IN:N_VAT_EX;
+  const std=[N_EARLY,N_LATE,N_OCC,vat];
+  const on=[...NOTES_OVERNIGHT.slice(0,3),vat];
+  const hr=[...NOTES_HOUR.slice(0,4),vat];
+  const col=(label,sub,time,type,pct,fmt)=>({label,sub,time,type,pct:pct||0,round:1000,fmt:fmt||"OFF {p}%"});
+  const fmt=b.id==="q3"?"{p}% OFF":"OFF {p}%";
+  const D=p=>col("NGÀY ĐÊM","FULL DAY STAY","2 PM - 12 PM",p?"discount":"plain",p,fmt);
+  const N=p=>col("QUA ĐÊM","OVERNIGHT STAY","10 PM - 12 PM",p?"discount":"plain",p,fmt);
+  const E=col("GIỜ PHÁT SINH","EXTRA HOUR","","plain");
+  const C=col("COMBO 3 TIẾNG","3-HOUR COMBO","","plain");
+  let cols,fields,rooms=b.rooms,title="ROOM RATES\n2026",titleStyle="serif",banner=BN_BASE,notes=std,roomAlign=b.roomAlign,currency=b.currency;
+  const range=monthRange(curMonth()),mon=MONTHS_EN[new Date().getMonth()];
+  switch(typeId){
+    case "wk":cols=[D(20),N(20),E];fields=["day","night","extra"];title=`${mon} PROMOTION\n${range}`;banner=BN_WEEK;break;
+    case "we":cols=[D(10),N(10),E];fields=["day","night","extra"];title=`${mon} PROMOTION\n${range}`;banner=BN_WKND;break;
+    case "on-wk":cols=[C,N(20),E];fields=["combo","night","extra"];title=`BẢNG GIÁ QUA ĐÊM\n${range}`;banner=BN_WEEK;notes=on;break;
+    case "on-we":cols=[C,N(10),E];fields=["combo","night","extra"];title=`BẢNG GIÁ QUA ĐÊM\n${range}`;banner=BN_WKND;notes=on;break;
+    case "partner":cols=[D(20),N(20),E];fields=["day","night","extra"];title="BẢNG GIÁ LƯU TRÚ\nƯU ĐÃI DÀNH CHO ĐỐI TÁC LỮ HÀNH 2026";titleStyle="sans";banner=["2026 TRAVEL PARTNER SPECIAL RATES",""];break;
+    case "hour":rooms=b.hourly||[];cols=[col("LITE STAY","(2 GIỜ/2 HOURS)","","plain"),col("COMFORT STAY","(3 GIỜ/3 HOURS)","","plain"),col("RELAX STAY","(5 GIỜ/5 HOURS)","","plain"),E];
+      fields=["lite","comfort","relax","extra"];title="GIÁ THUÊ THEO GIỜ 2026";titleStyle="sans";banner=["HOURLY RATES 2026",""];notes=hr;roomAlign="left";break;
+    default:cols=[D(0),N(0),E];fields=["day","night","extra"];
+  }
+  const rows=rooms.map(r=>({name:r.name,cells:cols.map((c,i)=>{const v=r[fields[i]];const base=v===""||v==null?"":Number(v);return {base,final:c.type==="discount"?calc(base,c):base}})}));
+  const t=TYPES.find(x=>x.id===typeId)||TYPES[0];
+  return {brandName:b.brandName,brandSub:b.brandSub,currency,title,titleStyle,bannerVi:banner[0],bannerEn:banner[1]||"",subline:"",roomAlign,
+    cols,rows,notes:notes.map(n=>({vi:n[0],en:n[1]})),filename:slug(b.name+" "+t.name)};
+}
+function buildState(branchId,typeId){
+  const b=getBranch(branchId);
+  if(!typesFor(b).some(t=>t.id===typeId))typeId="base";
+  const pid=PRESET_MAP[b.id+":"+typeId];
+  let st=(pid&&!b.edited)?stateFromPreset(PRESETS.find(p=>p.id===pid)):genState(b,typeId);
+  st.branchId=b.id;st.typeId=typeId;st.presetId=b.id+":"+typeId;
+  if(["wk","we","on-wk","on-we"].includes(typeId))applyMonth(st,curMonth());
+  st.filename=slug(b.name+" "+(TYPES.find(x=>x.id===typeId)||{}).name+" "+(st.month||""));
+  return st;
+}
+function inferBranch(st){
+  if(st.branchId)return st;
+  const p=String(st.presetId||"");st.branchId=p.startsWith("l-")?"q3":"q4";
+  const t=Object.entries(PRESET_MAP).find(([k,v])=>v===p);st.typeId=t?t[0].split(":")[1]:"base";
+  if(!p.startsWith("custom-"))st.presetId=st.branchId+":"+st.typeId;
+  return st;
+}
+
+function fillPresetSelect(){
+  const bs=allBranches();
+  $("branch").innerHTML=bs.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}${b.incomplete&&!b.edited?" (chưa đủ giá)":""}</option>`).join("");
+  $("branch").value=S.branchId;
+  const b=getBranch(S.branchId);
+  let h=`<optgroup label="Mẫu có sẵn">`+typesFor(b).map(t=>`<option value="${b.id}:${t.id}">${esc(t.name)}</option>`).join("")+`</optgroup>`;
+  const mine=custom.filter(c=>!c.branchId||c.branchId===b.id);
+  if(mine.length)h+=`<optgroup label="Mẫu đã lưu trên máy này">${mine.map(c=>`<option value="${esc(c.presetId)}">${esc(c.savedName)}</option>`).join("")}</optgroup>`;
+  $("preset").innerHTML=h;$("preset").value=S.presetId;
+  if($("preset").value!==S.presetId)$("preset").value=b.id+":"+S.typeId;
+  $("delBtn").hidden=!String(S.presetId).startsWith("custom-");
+  $("month").innerHTML=monthOptions(S.month);
+  renderBranchEditor();
+}
+function monthOptions(sel){
+  const d=new Date();const out=[`<option value="">Chọn tháng…</option>`];
+  for(let i=-1;i<12;i++){const x=new Date(d.getFullYear(),d.getMonth()+i,1);const v=x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0");
+    out.push(`<option value="${v}"${v===sel?" selected":""}>Tháng ${x.getMonth()+1}/${x.getFullYear()}</option>`)}
+  return out.join("");
+}
+
+/* branch editor */
+function saveBranchEdit(b){
+  const e={name:b.name,brandName:b.brandName,brandSub:b.brandSub,vat:b.vat,rooms:b.rooms,roomAlign:b.roomAlign,currency:b.currency,hourly:b.hourly||null};
+  if(b.isNew){e.isNew=true;e.id=b.id}
+  branchEdits[b.id]=e;LS.set("ljps.branches",branchEdits);
+}
+function renderBranchEditor(){
+  const b=getBranch(S.branchId);
+  $("beTitle").textContent=b.name;
+  $("beWarn").hidden=!(b.incomplete&&!b.edited);
+  $("beVat").value=b.vat;$("beBrand").value=b.brandName;$("beSub").value=b.brandSub;
+  $("beReset").hidden=!(b.edited&&!b.isNew);$("beDel").hidden=!b.isNew;
+  const cell=(ri,k,v)=>`<td><input id="be${ri}-${k}" inputmode="numeric" value="${fmtN(v)}" aria-label="${k}"></td>`;
+  $("beTable").innerHTML=`<thead><tr><th>Hạng phòng</th><th>Ngày đêm</th><th>Qua đêm</th><th>Giờ phát sinh</th><th>Combo 3 tiếng<br><span style="font-weight:400">bỏ trống nếu không có</span></th><th></th></tr></thead><tbody>`+
+    b.rooms.map((r,ri)=>`<tr><td><input id="be${ri}-name" value="${esc(r.name)}" aria-label="Tên hạng phòng"></td>${cell(ri,"day",r.day)}${cell(ri,"night",r.night)}${cell(ri,"extra",r.extra)}${cell(ri,"combo",r.combo)}<td><button class="x" data-bedel="${ri}" aria-label="Xóa hạng phòng">✕</button></td></tr>`).join("")+`</tbody>`;
+  b.rooms.forEach((r,ri)=>{
+    $(`be${ri}-name`).oninput=e=>{const bb=editable();bb.rooms[ri].name=e.target.value;saveBranchEdit(bb)};
+    ["day","night","extra","combo"].forEach(k=>{const el=$(`be${ri}-${k}`);
+      el.oninput=()=>{const bb=editable();bb.rooms[ri][k]=parseN(el.value);saveBranchEdit(bb)};
+      el.onblur=()=>{el.value=fmtN(parseN(el.value))}});
+  });
+  document.querySelectorAll("[data-bedel]").forEach(x=>x.onclick=()=>{const bb=editable();bb.rooms.splice(+x.dataset.bedel,1);saveBranchEdit(bb);renderBranchEditor()});
+}
+function editable(){return clone(getBranch(S.branchId))}
+["beVat","beBrand","beSub"].forEach(id=>{$(id).oninput=$(id).onchange=e=>{const bb=editable();bb[{beVat:"vat",beBrand:"brandName",beSub:"brandSub"}[id]]=e.target.value;saveBranchEdit(bb)}});
+$("beAdd").onclick=()=>{const bb=editable();bb.rooms.push({name:"HẠNG PHÒNG",day:"",night:"",extra:"",combo:""});saveBranchEdit(bb);renderBranchEditor();$(`be${bb.rooms.length-1}-name`).select()};
+$("beApply").onclick=()=>{S=buildState(S.branchId,S.typeId);renderAll();setStatus("Đã điền lại bảng giá theo thông tin chi nhánh.");$("sec-prices").scrollIntoView({block:"start"})};
+$("beReset").onclick=()=>{delete branchEdits[S.branchId];LS.set("ljps.branches",branchEdits);S=buildState(S.branchId,S.typeId);renderAll();setStatus("Đã khôi phục giá gốc của chi nhánh.")};
+$("beNewBtn").onclick=()=>{const name=$("beNewName").value.trim();if(!name){$("beNewName").focus();return}
+  const id="b-"+Date.now();const src=getBranch(S.branchId);
+  branchEdits[id]={isNew:true,id,name,brandName:src.brandName,brandSub:slug(name).replace(/-/g," ").toUpperCase(),vat:src.vat,roomAlign:src.roomAlign,currency:src.currency,
+    rooms:src.rooms.map(r=>({name:r.name,day:"",night:"",extra:"",combo:""})),hourly:null};
+  LS.set("ljps.branches",branchEdits);$("beNewName").value="";S=buildState(id,"base");renderAll();$("branchEdit").open=true;setStatus(`Đã thêm chi nhánh "${name}". Điền giá gốc trong mục Thông tin chi nhánh.`)};
+$("beDel").onclick=()=>{delete branchEdits[S.branchId];LS.set("ljps.branches",branchEdits);S=buildState("q4","base");renderAll();setStatus("Đã xóa chi nhánh tự thêm.")};
+
+function keepMonth(prev,st){if(prev&&["wk","we","on-wk","on-we"].includes(st.typeId))applyMonth(st,prev);return st}
+$("branch").onchange=e=>{const m=S.month;S=keepMonth(m,buildState(e.target.value,S.typeId||"base"));renderAll();setStatus("")};
+$("preset").onchange=e=>{const id=e.target.value;const c=custom.find(x=>x.presetId===id);
+  if(c){S=inferBranch(clone(c));S.presetId=id}else{const [bid,tid]=id.split(":");const m=S.month;S=keepMonth(m,buildState(bid,tid))}
+  renderAll();setStatus("")};
+$("month").onchange=e=>{if(!e.target.value)return;applyMonth(S,e.target.value);bindSimple();changed()};
+$("resetBtn").onclick=()=>{const c=custom.find(x=>x.presetId===S.presetId);
+  S=c?inferBranch(clone(c)):buildState(S.branchId,S.typeId);renderAll();setStatus("Đã khôi phục mẫu.")};
+$("saveBtn").onclick=()=>{const name=$("saveName").value.trim();if(!name){setStatus("Nhập tên mẫu trước khi lưu.");$("saveName").focus();return}
+  const copy=clone(S);copy.savedName=name;
+  const ex=custom.find(c=>c.savedName===name);copy.presetId=ex?ex.presetId:"custom-"+Date.now();
+  custom=custom.filter(c=>c.presetId!==copy.presetId);custom.push(copy);LS.set("ljps.custom",custom);
+  S.presetId=copy.presetId;fillPresetSelect();$("saveName").value="";setStatus(`Đã lưu mẫu "${name}".`)};
+$("delBtn").onclick=()=>{custom=custom.filter(c=>c.presetId!==S.presetId);LS.set("ljps.custom",custom);S.presetId=S.branchId+":"+S.typeId;fillPresetSelect();setStatus("Đã xóa mẫu riêng. Nội dung đang sửa vẫn giữ nguyên.")};
+
 function renderAll(){fillPresetSelect();bindSimple();renderCols();renderPrices();renderNotes();changed()}
 
 $("addCol").onclick=()=>{if(S.cols.length>=4)return;S.cols.push({label:"CỘT MỚI",sub:"",time:"",type:"plain",pct:0,round:1000,fmt:"OFF {p}%"});S.rows.forEach(r=>r.cells.push({base:"",final:""}));renderCols();renderPrices();changed()};
 $("addRow").onclick=()=>{S.rows.push({name:"HẠNG PHÒNG",cells:S.cols.map(()=>({base:"",final:""}))});renderPrices();changed();$(`r${S.rows.length-1}-name`).select()};
 $("addNote").onclick=()=>{S.notes.push({vi:"",en:""});renderNotes();changed();$(`n${S.notes.length-1}-vi`).focus()};
-$("preset").onchange=e=>{const id=e.target.value;const p=PRESETS.find(x=>x.id===id);const c=custom.find(x=>x.presetId===id);
-  S=p?stateFromPreset(p):JSON.parse(JSON.stringify(c));S.presetId=id;renderAll();setStatus("")};
-$("resetBtn").onclick=()=>{const id=S.presetId;const p=PRESETS.find(x=>x.id===id);const c=custom.find(x=>x.presetId===id);
-  S=p?stateFromPreset(p):c?JSON.parse(JSON.stringify(c)):stateFromPreset(PRESETS[0]);renderAll();setStatus("Đã khôi phục mẫu.")};
-$("saveBtn").onclick=()=>{const name=$("saveName").value.trim();if(!name){setStatus("Nhập tên mẫu trước khi lưu.");$("saveName").focus();return}
-  const copy=JSON.parse(JSON.stringify(S));copy.savedName=name;
-  const ex=custom.find(c=>c.savedName===name);copy.presetId=ex?ex.presetId:"custom-"+Date.now();
-  custom=custom.filter(c=>c.presetId!==copy.presetId);custom.push(copy);LS.set("ljps.custom",custom);
-  S.presetId=copy.presetId;fillPresetSelect();$("saveName").value="";setStatus(`Đã lưu mẫu "${name}".`)};
-$("delBtn").onclick=()=>{custom=custom.filter(c=>c.presetId!==S.presetId);LS.set("ljps.custom",custom);S.presetId=PRESETS[0].id;fillPresetSelect();setStatus("Đã xóa mẫu riêng. Nội dung đang sửa vẫn giữ nguyên.")};
-
 let raf=0;
 function changed(){LS.set("ljps.draft",S);cancelAnimationFrame(raf);raf=requestAnimationFrame(drawPreview)}
 function setStatus(t){$("status").textContent=t}
@@ -1082,6 +1280,39 @@ function render(canvas,scale){canvas.width=W*scale;canvas.height=H*scale;const c
 function drawPreview(){render($("cv"),Math.min(2,window.devicePixelRatio||1))}
 
 /* ---------- export ---------- */
+const IN_CLAUDE=!!(window.claude&&window.claude.use);
+/* ---------- saving files (works on desktop, iPad/iPhone, Android) ---------- */
+const UA=navigator.userAgent;
+const IS_IOS=/iPad|iPhone|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const IN_APP=/Zalo|FBAN|FBAV|FB_IAB|Instagram|Line\/|Messenger|MicroMessenger|; wv\)/i.test(UA);
+let resUrl=null,resFile=null;
+function offer(blob,name,kind){
+  if(resUrl)URL.revokeObjectURL(resUrl);resUrl=URL.createObjectURL(blob);
+  try{resFile=new File([blob],name,{type:blob.type})}catch(e){resFile=null}
+  $("resName").textContent=name;
+  const links=!IN_CLAUDE;
+  $("resDl").hidden=!links;$("resOpen").hidden=!links||kind==="json";
+  if(links){$("resDl").href=resUrl;$("resDl").setAttribute("download",name);$("resOpen").href=resUrl}
+  const isImg=kind==="png";
+  $("resImg").hidden=!isImg;$("resFileCard").hidden=isImg;
+  if(isImg)$("resImg").src=resUrl;
+  else $("resFileInfo").textContent=(kind==="pdf"?"File PDF khổ A4":"File sao lưu")+" · "+Math.max(1,Math.round(blob.size/1024))+" KB";
+  let canShare=false;try{canShare=!!(resFile&&navigator.canShare&&navigator.canShare({files:[resFile]}))}catch(e){}
+  $("resShare").hidden=!canShare;
+  $("resShare").textContent=isImg?(IS_IOS?"Lưu vào Ảnh / Chia sẻ":"Chia sẻ"):(IS_IOS?"Lưu vào Tệp / Chia sẻ":"Chia sẻ");
+  let hint;
+  if(IN_APP)hint="Ứng dụng nhắn tin (Zalo, Messenger…) thường chặn tải file. Bấm nút ⋯ ở góc trên, chọn \"Mở bằng trình duyệt\", rồi xuất lại.";
+  else if(IN_CLAUDE)hint=isImg?"Nhấn giữ (điện thoại) hoặc chuột phải (máy tính) vào ảnh, chọn \"Lưu ảnh\".":"";
+  else if(IS_IOS)hint=isImg?(canShare?"Bấm \"Lưu vào Ảnh / Chia sẻ\" rồi chọn \"Lưu hình ảnh\". Hoặc nhấn giữ vào ảnh, chọn \"Lưu vào Ảnh\".":"Nhấn giữ vào ảnh, chọn \"Lưu vào Ảnh\". Hoặc bấm \"Tải về máy\" để lưu vào Tệp."):(canShare?"Bấm \"Lưu vào Tệp / Chia sẻ\" rồi chọn \"Lưu vào Tệp\", hoặc bấm \"Tải về máy\".":"Bấm \"Tải về máy\", rồi chọn \"Tải về\" để lưu vào ứng dụng Tệp.");
+  else hint=(isImg?"Ảnh":"File")+" đã được tải về thư mục Tải xuống (Downloads). Nếu không thấy, bấm \"Tải về máy\".";
+  $("resHint").textContent=hint;
+  $("result").hidden=false;$("result").scrollIntoView({block:"nearest",behavior:"smooth"});
+  if(links&&!IS_IOS&&!IN_APP){try{const a=document.createElement("a");a.href=resUrl;a.download=name;document.body.appendChild(a);a.click();a.remove()}catch(e){}}
+}
+$("resShare").onclick=async()=>{if(!resFile)return;try{await navigator.share({files:[resFile],title:resFile.name})}catch(e){if(e&&e.name!=="AbortError")setStatus("Không mở được bảng chia sẻ. Hãy bấm \"Tải về máy\".")}};
+$("resClose").onclick=()=>{$("result").hidden=true};
+if(IN_APP)$("inappWarn").hidden=false;
+
 let downloads=null;
 (async()=>{try{downloads=await window.claude?.use?.("downloads")}catch(e){downloads=null}})();
 $("exportBtn").onclick=async()=>{
@@ -1091,22 +1322,19 @@ $("exportBtn").onclick=async()=>{
     const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
     const name=(slug(S.filename||"bang-gia")||"bang-gia")+".png";
     if(downloads){
-      try{await downloads.save({filename:name,data:blob});setStatus(`Đã lưu ${name}.`);$("fallback").hidden=true}
-      catch(e){if(e&&e.code==="declined")setStatus("Đã hủy lưu ảnh.");else if(e&&e.code==="rate_limited")setStatus("Đang có hộp thoại lưu mở, thử lại sau giây lát.");else showFallback(cv,name)}
-    } else if(!IN_CLAUDE){anchorSave(blob,name);setStatus(`Đã tải ${name}.`)}
-    else showFallback(cv,name);
+      try{await downloads.save({filename:name,data:blob});setStatus(`Đã lưu ${name}.`);$("result").hidden=true}
+      catch(e){if(e&&e.code==="declined")setStatus("Đã hủy lưu ảnh.");else if(e&&e.code==="rate_limited")setStatus("Đang có hộp thoại lưu mở, thử lại sau giây lát.");else{offer(blob,name,"png");setStatus("")}}
+    } else {offer(blob,name,"png");setStatus("")}
   }finally{btn.disabled=false}
 };
-const IN_CLAUDE=!!(window.claude&&window.claude.use);
-function anchorSave(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000)}
 /* ---------- backup / restore ---------- */
-function backupData(){return {app:"le-jardin-bang-gia",version:1,savedAt:new Date().toISOString(),custom,draft:S}}
+function backupData(){return {app:"le-jardin-bang-gia",version:2,savedAt:new Date().toISOString(),custom,draft:S,branches:branchEdits}}
 function bkStatus(t){$("bkStatus").textContent=t}
 $("bkFile").onclick=async()=>{
   const n=custom.length;const blob=new Blob([JSON.stringify(backupData(),null,1)],{type:"application/json"});
   const name="sao-luu-bang-gia-"+new Date().toISOString().slice(0,10)+".json";
   if(downloads){try{await downloads.save({filename:name,data:blob});bkStatus(`Đã lưu ${name} (${n} mẫu riêng và bản đang sửa).`)}catch(e){bkStatus(e&&e.code==="declined"?"Đã hủy lưu.":"Không lưu được file ở đây. Hãy dùng nút Sao chép mã sao lưu.")}}
-  else if(!IN_CLAUDE){anchorSave(blob,name);bkStatus(`Đã tải ${name} (${n} mẫu riêng và bản đang sửa).`)}
+  else if(!IN_CLAUDE){offer(blob,name,"json");bkStatus(`Đã tạo ${name} (${n} mẫu riêng, bản đang sửa và thông tin chi nhánh). Xem nút tải ở phần Xuất ảnh.`)}
   else bkStatus("Máy này không lưu file được qua link Claude. Hãy dùng nút Sao chép mã sao lưu rồi dán vào Zalo hoặc ghi chú.");
 };
 $("bkCopy").onclick=async()=>{
@@ -1120,7 +1348,8 @@ function restore(txt){
   let added=0,updated=0;
   (d.custom||[]).forEach(c=>{const i=custom.findIndex(x=>x.presetId===c.presetId);if(i>=0){custom[i]=c;updated++}else{custom.push(c);added++}});
   LS.set("ljps.custom",custom);
-  if(d.draft&&d.draft.rows){S=d.draft;}
+  if(d.branches){Object.assign(branchEdits,d.branches);LS.set("ljps.branches",branchEdits)}
+  if(d.draft&&d.draft.rows){S=inferBranch(d.draft);}
   renderAll();$("rsPasteBox").hidden=true;$("rsPaste").value="";
   bkStatus(`Đã khôi phục: thêm ${added} mẫu riêng${updated?`, cập nhật ${updated} mẫu`:""} và bản đang sửa.`);
 }
@@ -1129,7 +1358,6 @@ $("rsFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new File
 $("rsPasteBtn").onclick=()=>{$("rsPasteBox").hidden=false;$("rsPaste").value="";$("rsPaste").focus()};
 $("rsPasteCancel").onclick=()=>{$("rsPasteBox").hidden=true};
 $("rsPasteGo").onclick=()=>restore($("rsPaste").value.trim());
-function showFallback(cv,name){$("fallbackImg").src=cv.toDataURL("image/png");$("fallback").hidden=false;setStatus(`Ảnh ${name} đã sẵn sàng bên dưới.`)}
 
 
 /* ---------- guide view ---------- */
@@ -1297,7 +1525,7 @@ $("pdfBtn").onclick=async()=>{
     finally{drawPreview()}
     const blob=pdf.output("blob");const name=(slug(S.filename||"bang-gia")||"bang-gia")+".pdf";
     if(!downloads){
-      if(!IN_CLAUDE){anchorSave(blob,name);setStatus(`Đã tải ${name}. Khi in chọn khổ A4, tỉ lệ 100% hoặc "Vừa trang".`);return}
+      if(!IN_CLAUDE){offer(blob,name,"pdf");setStatus(`Khi in chọn khổ A4, tỉ lệ 100% hoặc "Vừa trang".`);return}
       setStatus("Máy này chưa tải file được qua link Claude. Hãy dùng bản công cụ dạng file .html (xin quản lý gửi), hoặc đăng nhập claude.ai rồi mở lại link.");return}
     try{await downloads.save({filename:name,data:blob});setStatus(`Đã lưu ${name}. Khi in chọn khổ A4, tỉ lệ 100% hoặc "Vừa trang".`)}
     catch(e){if(e&&e.code==="declined")setStatus("Đã hủy lưu file PDF.");else if(e&&e.code==="rate_limited")setStatus("Đang có hộp thoại lưu mở, thử lại sau giây lát.");else setStatus("Không lưu được file PDF trên trình xem này. Hãy xuất ảnh PNG rồi in.")}
@@ -1305,6 +1533,7 @@ $("pdfBtn").onclick=async()=>{
 };
 
 /* ---------- boot ---------- */
+S=inferBranch(S);
 renderAll();
 showView();
 const faces=['500 54px "Cormorant Garamond"','600 25px "Cormorant Garamond"','300 18px "Josefin Sans"','400 18px "Josefin Sans"','600 25px "Josefin Sans"','700 46px "Josefin Sans"','italic 300 17px "Josefin Sans"'];
